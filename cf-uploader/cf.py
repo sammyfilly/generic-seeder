@@ -21,10 +21,10 @@ def _lookup_zone_id(cloudflare, domain):
     zones = cloudflare.zones.get(params={'name': domain})
 
     if not len(zones):
-        raise errors.ZoneNotFound("Could not find zone named: {}".format(domain))
+        raise errors.ZoneNotFound(f"Could not find zone named: {domain}")
 
     if len(zones) > 1:
-        raise errors.TooManyZones("More than one zone found named: {}".format(domain))
+        raise errors.TooManyZones(f"More than one zone found named: {domain}")
 
     return zones[0]['id']
 
@@ -51,7 +51,9 @@ class CloudflareSeeder(object):
 
         """ Constructor: set the member variables. """
 
-        logger.debug("CloudflareSeeder creation for user: {} domain: {} name: {}".format(user, domain, name))
+        logger.debug(
+            f"CloudflareSeeder creation for user: {user} domain: {domain} name: {name}"
+        )
         self.cf = CloudFlare.CloudFlare(email=user, token=key)
         self.domain = domain
         self.name = name
@@ -87,7 +89,7 @@ class CloudflareSeeder(object):
             page += 1
             default_params['page'] = page
 
-            logger.info("Getting page {} of DNS entries".format(page))
+            logger.info(f"Getting page {page} of DNS entries")
 
             raw_results = self.cf.zones.dns_records.get(zone_id, params=default_params)
             records.extend(raw_results['result'])
@@ -112,13 +114,17 @@ class CloudflareSeeder(object):
 
         """ Set either a flags or no flags seed entry in cloud flare. """
 
-        logger.debug("Setting seed {} in cloudflare".format(seed))
-        new_record = {'name': self.name if not flags else 'x9.' + self.name, 'type': 'AAAA' if isipv6(seed) else 'A', 'content': seed}
+        logger.debug(f"Setting seed {seed} in cloudflare")
+        new_record = {
+            'name': self.name if not flags else f'x9.{self.name}',
+            'type': 'AAAA' if isipv6(seed) else 'A',
+            'content': seed,
+        }
 
         if ttl is not None:
             new_record['ttl'] = ttl
 
-        logger.debug("Posting record {}".format(new_record))
+        logger.debug(f"Posting record {new_record}")
         try:
             self.cf.zones.dns_records.post(self.zone_id, data=new_record)
         except CloudFlare.exceptions.CloudFlareAPIError as e:
@@ -138,7 +144,7 @@ class CloudflareSeeder(object):
         logger.debug("Deleting seeds from cloudflare.")
         for seed_record in self.get_seed_records() + self.get_seed_records(flags=True):
             if seed_record['content'] in seeds:
-                logger.debug("Found seed to delete: {}".format(seed_record['content']))
+                logger.debug(f"Found seed to delete: {seed_record['content']}")
                 self.cf.zones.dns_records.delete(self.zone_id, seed_record['id'])
 
     def set_seeds(self, seeds, ttl=None):

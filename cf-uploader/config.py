@@ -14,7 +14,7 @@ def get_conf_file_contents():
 
     conf_file = '../settings.conf'
     if os.path.exists(conf_file):
-        logger.info("Found conf file {}".format(conf_file))
+        logger.info(f"Found conf file {conf_file}")
         file_content = ''
         with open(conf_file, 'r') as f:
             file_content = '[general]\n' + f.read()
@@ -27,7 +27,7 @@ def read_config_section(config, section):
 
     """ Read a section of a config file into a dict and return it. """
 
-    logger.info("Reading section {} from config.".format(section))
+    logger.info(f"Reading section {section} from config.")
 
     configuration = {}
     options = config.options(section)
@@ -36,10 +36,10 @@ def read_config_section(config, section):
 
         try:
             configuration[option] = config.get(section, option)
-            logger.debug("Successfully read option {}: {}".format(option, configuration[option]))
+            logger.debug(f"Successfully read option {option}: {configuration[option]}")
 
         except configparser.NoOptionError:
-            logger.warning("Could not read config option {} from section {}".format(option, section))
+            logger.warning(f"Could not read config option {option} from section {section}")
             configuration[option] = None
 
     return configuration

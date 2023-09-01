@@ -22,26 +22,30 @@ def main():
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     try:
-        seed_candidates = parser.read_seed_dump(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/' + configuration['cf_seed_dump'].replace('"', ''), configuration['wallet_port'].replace('"', '')[:7].strip())
+        seed_candidates = parser.read_seed_dump(
+            f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/'
+            + configuration['cf_seed_dump'].replace('"', ''),
+            configuration['wallet_port'].replace('"', '')[:7].strip(),
+        )
     except OSError as e:
         print("ERROR: " + configuration['cf_seed_dump'] + " dump file not found. Did you forget to run the actual seeder app?")
         sys.exit(-1)
     except errors.SeedsNotFound as e:
         if hasattr(e, 'message'):
-            print("ERROR: Problem reading seeds - {}".format(e.message))
+            print(f"ERROR: Problem reading seeds - {e.message}")
         else:
-            print("ERROR: " + str(e))
+            print(f"ERROR: {str(e)}")
 
         sys.exit(-1)
 
     cloudflare = cf.CloudflareSeeder.from_configuration(configuration)
     current_seeds = cloudflare.get_seeds()
 
-    logger.debug("Detected current seeds in cloudflare: {}".format(current_seeds))
+    logger.debug(f"Detected current seeds in cloudflare: {current_seeds}")
 
-    # Remove stale seeds (not in our candidate list
-    stale_current_seeds = [seed for seed in current_seeds if seed not in seed_candidates]
-    if stale_current_seeds:
+    if stale_current_seeds := [
+        seed for seed in current_seeds if seed not in seed_candidates
+    ]:
         cloudflare.delete_seeds(stale_current_seeds)
         current_good_seeds = [seed for seed in current_seeds if seed not in stale_current_seeds]
     else:
@@ -49,8 +53,9 @@ def main():
 
     # Prune
     if len(current_good_seeds) >= MAX_SEEDS:
-        deleting = [seed for seed in current_good_seeds if seed not in seed_candidates]
-        if deleting:
+        if deleting := [
+            seed for seed in current_good_seeds if seed not in seed_candidates
+        ]:
             cloudflare.delete_seeds(deleting)
             current_good_seeds = [seed for seed in current_good_seeds if seed not in deleting]
 

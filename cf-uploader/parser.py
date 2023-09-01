@@ -31,23 +31,19 @@ def parse_ip(ip):
 
     """ Return an ip address and port number from the string """
 
-    if isipv6(ip):
-        return _parse_ipv6(ip)
-    else:
-        return _parse_ipv4(ip)
+    return _parse_ipv6(ip) if isipv6(ip) else _parse_ipv4(ip)
 
 
 def read_hard_seeds(hard_seeds_file):
 
     """ Read the hard seed list from the file. Should just be new line separated list of IP Addresses. """
 
-    logger.debug("Reading hard seeds file: {}".format(hard_seeds_file))
+    logger.debug(f"Reading hard seeds file: {hard_seeds_file}")
 
     hard_seeds = []
     with open(hard_seeds_file) as seed_lines:
         for line in seed_lines:
-            stripped_line = line.strip()
-            if stripped_line:
+            if stripped_line := line.strip():
                 if ':' in stripped_line:
                     hard_seed = stripped_line.split(':')[0]
                 else:
@@ -55,10 +51,12 @@ def read_hard_seeds(hard_seeds_file):
 
                 hard_seeds.append(hard_seed)
 
-    logger.info("Found {} hard seeds.".format(len(hard_seeds)))
+    logger.info(f"Found {len(hard_seeds)} hard seeds.")
 
     if not hard_seeds:
-        raise errors.SeedsNotFound("No seeds read from the hard seeds list: {}".format(hard_seeds_file))
+        raise errors.SeedsNotFound(
+            f"No seeds read from the hard seeds list: {hard_seeds_file}"
+        )
 
     return hard_seeds
 
@@ -67,7 +65,7 @@ def read_seed_dump(seeds_file, valid_port):
 
     """ Read the good ip addresses from the seeds dump. """
 
-    logger.debug("Reading seeds dump file: {}".format(seeds_file))
+    logger.debug(f"Reading seeds dump file: {seeds_file}")
 
     addresses = []
     with open(seeds_file) as seeds:
@@ -80,18 +78,20 @@ def read_seed_dump(seeds_file, valid_port):
 
             try:
                 ip_addr, port = parse_ip(components[0])
-                logger.debug("Parsed ip: {}".format(ip_addr))
+                logger.debug(f"Parsed ip: {ip_addr}")
             except ValueError:
-                logger.error("Could not parse ip from {} - skipping.".format(components[0]))
+                logger.error(f"Could not parse ip from {components[0]} - skipping.")
                 continue
 
             if port == valid_port and components[1] == "1":
                 addresses.append(ip_addr)
-                logger.debug("Read a good seed: IP {} PORT {}".format(ip_addr, port))
+                logger.debug(f"Read a good seed: IP {ip_addr} PORT {port}")
 
-    logger.info("Found {} good ip addresses from dump file.".format(len(addresses)))
+    logger.info(f"Found {len(addresses)} good ip addresses from dump file.")
 
     if not addresses:
-        raise errors.SeedsNotFound("No good seeds read from seeds dump file: {}".format(seeds_file))
+        raise errors.SeedsNotFound(
+            f"No good seeds read from seeds dump file: {seeds_file}"
+        )
 
     return addresses
